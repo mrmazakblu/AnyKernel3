@@ -5,22 +5,22 @@
 # begin properties
 properties() { '
 kernel.string=ExampleKernel by osm0sis @ xda-developers
-do.devicecheck=1
-do.modules=0
-do.systemless=1
-do.cleanup=1
+do.devicecheck=0
+do.modules=
+do.systemless=0
+do.cleanup=0
 do.cleanuponabort=0
-device.name1=maguro
-device.name2=toro
-device.name3=toroplus
-device.name4=tuna
+device.name1=
+device.name2=
+device.name3=
+device.name4=
 device.name5=
 supported.versions=
 supported.patchlevels=
 '; } # end properties
 
 # shell variables
-block=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;
+block=/dev/block/platform/bootdevice/by-name/boot;
 is_slot_device=0;
 ramdisk_compression=auto;
 
@@ -29,36 +29,41 @@ ramdisk_compression=auto;
 # import patching functions/variables - see for reference
 . tools/ak3-core.sh;
 
+# Copy New Files
+
+$BB mount -o rw,remount -t auto /system;
+$BB mount -o rw,remount -t auto /vendor;
+
+cp /tmp/anykernel/add-these/ /system_root/
 
 ## AnyKernel file attributes
 # set permissions/ownership for included ramdisk files
-set_perm_recursive 0 0 755 644 $ramdisk/*;
-set_perm_recursive 0 0 750 750 $ramdisk/init* $ramdisk/sbin;
+set_perm_recursive 0 2000 0750, /system_root/bin/healthd;
+set_perm_recursive 0 2000 0755 0644, /system_root/res/images/font_log.png;
+set_perm_recursive 0 2000 0755 0644, /system_root/res/charger/battery_fail.png;
+set_perm_recursive 0 2000 0755 0644, /system_root/res/charger/battery_scale.png;
+set_perm_recursive 0 2000 0755 0644, /system_root/res/charger/cm_battery_scale.png;
 
 
 ## AnyKernel install
-dump_boot;
 
-# begin ramdisk changes
+# begin INIT changes
 
-# init.rc
-backup_file init.rc;
-replace_string init.rc "cpuctl cpu,timer_slack" "mount cgroup none /dev/cpuctl cpu" "mount cgroup none /dev/cpuctl cpu,timer_slack";
+# init.#HARDWARE#.rc
+hardware=$(getprop ro.hardware)
+insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "on charger" "# start Mod for Offline charge";
+insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "# start Mod for Offline charge" "	write /sys/class/leds/lcd-backlight/trigger /"backlight/"";
+insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "	write /sys/class/leds/lcd-backlight/trigger /"backlight/"" "	service charger /sbin/healthd -c";
+insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "	service charger /sbin/healthd -c" "    class charger";
+insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "    class charger" "    critical";
+insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "    critical" "    seclabel u:r:healthd:s0";
+insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "    seclabel u:r:healthd:s0" "# End Mod for Offline charge";
 
-# init.tuna.rc
-backup_file init.tuna.rc;
-insert_line init.tuna.rc "nodiratime barrier=0" after "mount_all /fstab.tuna" "\tmount ext4 /dev/block/platform/omap/omap_hsmmc.0/by-name/userdata /data remount nosuid nodev noatime nodiratime barrier=0";
-append_file init.tuna.rc "bootscript" init.tuna;
 
-# fstab.tuna
-backup_file fstab.tuna;
-patch_fstab fstab.tuna /system ext4 options "noatime,barrier=1" "noatime,nodiratime,barrier=0";
-patch_fstab fstab.tuna /cache ext4 options "barrier=1" "barrier=0,nomblk_io_submit";
-patch_fstab fstab.tuna /data ext4 options "data=ordered" "nomblk_io_submit,data=writeback";
-append_file fstab.tuna "usbdisk" fstab;
+# init.#HARDWARE#.usb.rc
+insert_line /vendor/etc/init/hw/init.$hardware.usb.rc "on charger" after "on charger" "    write /sys/class/android_usb/android0/enable 1";
+ 
+# end INIT changes
 
-# end ramdisk changes
-
-write_boot;
-## end install
+## end install 
 
