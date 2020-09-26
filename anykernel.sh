@@ -32,18 +32,18 @@ ramdisk_compression=auto;
 # Copy New Files
 
 $BB mount -o rw,remount -t auto /system;
+$BB mount -o rw,remount -t auto /system_root;
 $BB mount -o rw,remount -t auto /vendor;
 
-cp /tmp/anykernel/add-these/ /system_root/
+$BB cp -r /tmp/anykernel/add-these/* /system_root/
 
 ## AnyKernel file attributes
 # set permissions/ownership for included ramdisk files
-set_perm_recursive 0 2000 0750, /system_root/bin/healthd;
-set_perm_recursive 0 2000 0755 0644, /system_root/res/images/font_log.png;
-set_perm_recursive 0 2000 0755 0644, /system_root/res/charger/battery_fail.png;
-set_perm_recursive 0 2000 0755 0644, /system_root/res/charger/battery_scale.png;
-set_perm_recursive 0 2000 0755 0644, /system_root/res/charger/cm_battery_scale.png;
-
+set_perm_recursive 0 2000 750 /system_root/bin/healthd;
+set_perm_recursive 0 2000 755 644 /system_root/res/images/font_log.png;
+set_perm_recursive 0 2000 755 644 /system_root/res/images/charger/battery_fail.png;
+set_perm_recursive 0 2000 755 644 /system_root/res/images/charger/battery_scale.png;
+set_perm_recursive 0 2000 755 644 /system_root/res/images/charger/cm_battery_scale.png;
 
 ## AnyKernel install
 
