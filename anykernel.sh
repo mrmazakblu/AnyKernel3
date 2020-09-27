@@ -32,6 +32,7 @@ ramdisk_compression=auto;
 # Copy New Files
 
 systemdir=system_root
+$BB mount -a
 $BB mount -o rw,remount -t auto /$systemdir;
 $BB mount -o rw,remount -t auto /vendor;
 
