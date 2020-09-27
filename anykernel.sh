@@ -31,19 +31,19 @@ ramdisk_compression=auto;
 
 # Copy New Files
 
-$BB mount -o rw,remount -t auto /system;
-$BB mount -o rw,remount -t auto /system_root;
+systemdir=system_root
+$BB mount -o rw,remount -t auto /$systemdir;
 $BB mount -o rw,remount -t auto /vendor;
 
-$BB cp -r /tmp/anykernel/add-these/* /system_root/
+$BB cp -r /tmp/anykernel/add-these/* /$systemdir/
 
 ## AnyKernel file attributes
-# set permissions/ownership for included ramdisk files
-set_perm_recursive 0 2000 750 /system_root/bin/healthd;
-set_perm_recursive 0 2000 755 644 /system_root/res/images/font_log.png;
-set_perm_recursive 0 2000 755 644 /system_root/res/images/charger/battery_fail.png;
-set_perm_recursive 0 2000 755 644 /system_root/res/images/charger/battery_scale.png;
-set_perm_recursive 0 2000 755 644 /system_root/res/images/charger/cm_battery_scale.png;
+# set permissions/ownership for added files
+set_perm_recursive 0 2000 750 /$systemdir/bin/healthd;
+set_perm_recursive 0 2000 755 644 /$systemdir/res/images/font_log.png;
+set_perm_recursive 0 2000 755 644 /$systemdir/res/images/charger/battery_fail.png;
+set_perm_recursive 0 2000 755 644 /$systemdir/res/images/charger/battery_scale.png;
+set_perm_recursive 0 2000 755 644 /$systemdir/res/images/charger/cm_battery_scale.png;
 
 ## AnyKernel install
 
@@ -51,17 +51,10 @@ set_perm_recursive 0 2000 755 644 /system_root/res/images/charger/cm_battery_sca
 
 # init.#HARDWARE#.rc
 hardware=$(getprop ro.hardware)
-insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "on charger" "# start Mod for Offline charge";
-insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "# start Mod for Offline charge" "	write /sys/class/leds/lcd-backlight/trigger /"backlight/"";
-insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "	write /sys/class/leds/lcd-backlight/trigger /"backlight/"" "	service charger /sbin/healthd -c";
-insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "	service charger /sbin/healthd -c" "    class charger";
-insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "    class charger" "    critical";
-insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "    critical" "    seclabel u:r:healthd:s0";
-insert_line /vendor/etc/init/hw/init.$hardware.rc "MTK" after "    seclabel u:r:healthd:s0" "# End Mod for Offline charge";
-
+append_file /vendor/etc/init/hw/init.$hardware.rc "MTK" /tmp/anykernel/hardware.rc;
 
 # init.#HARDWARE#.usb.rc
-insert_line /vendor/etc/init/hw/init.$hardware.usb.rc "on charger" after "on charger" "    write /sys/class/android_usb/android0/enable 1";
+append_file /vendor/etc/init/hw/init.$hardware.usb.rc "on charger" /tmp/anykernel/hardware.usb.rc;
  
 # end INIT changes
 

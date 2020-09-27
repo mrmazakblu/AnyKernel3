@@ -1,0 +1,7 @@
+# start Mod for Offline charge
+    write /sys/class/leds/lcd-backlight/trigger "backlight"
+    service charger /sbin/healthd -c
+    class charger
+    critical
+    seclabel u:r:healthd:s0
+# End Mod for Offline charge   

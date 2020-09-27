@@ -1,0 +1,4 @@
+# Start Mod for Offline charge
+on charger
+    write /sys/class/android_usb/android0/enable 1
+# End Mod for Offline charge  
